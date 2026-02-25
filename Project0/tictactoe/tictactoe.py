@@ -3,6 +3,7 @@ Tic Tac Toe Player
 """
 
 import math
+import copy
 
 X = "X"
 O = "O"
@@ -54,14 +55,14 @@ def actions(board):
     actions_set = []    # List of every possible action
 
     i = 0  # Row counter
-    j = 0  # Cell counter
     for row in board:
+        j = 0  # Cell counter
         for cell in row:
             if cell == EMPTY:
-                actions_set.append(tuple(i, j))
+                actions_set.append((i, j))
             j += 1
 
-            if j == 2:
+            if j > 2:
                 i += 1
 
     return actions_set
@@ -71,21 +72,15 @@ def result(board, action):
     """
     Returns the board that results from making move (i, j) on the board.
     """
-    result_board = board.copy()
+    result_board = copy.deepcopy(board)
 
     i_action = action[0]    # Row of the action
     j_action = action[1]    # Cell of the action
-    i = 0   # Row counter
-    j = 0   # Cell counter
-    for row in board:
-        if i == i_action:   # If it's in the right row, enter the cell loop
-            for cell in row:
-                if j == j_action:   # If it's in the right cell, tries to make the action
-                    if (board[i][j] != EMPTY) or (i > 2) or (j > 2):
-                        raise Exception("Invalid action")
-                    result_board[i][j] = player(board)
-                j += 1
-        i += 1
+    
+    if (result_board[i_action][j_action] != EMPTY) or (i_action > 2) or (j_action > 2):
+        raise Exception("Invalid action")
+    
+    result_board[i_action][j_action] = player(board)
     
     return result_board
 
@@ -133,6 +128,8 @@ def utility(board):
     else:
         return 0
 
+# TODO
+# Still not playing optmally
 def minimax(board):
     """
     Returns the optimal action for the current player on the board.
@@ -143,43 +140,51 @@ def minimax(board):
     
     # Checking whose turn is it
     if player(board) == X:
-        return max_loop(board, -1000)
+        score, optimal_action = max_loop(board, -1000, None) # The arguments are: a board, a default utility number and an action
     elif player(board) == O:
-        return mini_loop(board, 1000)
+        score, optimal_action = mini_loop(board, 1000, None) # The arguments are: a board, a default utility number and an action
 
-#TODO
-# The score recursion logic is working, now I need to find a way to make this thing return the correct final board/action
-def max_loop(board, score):
+    return optimal_action
+
+def max_loop(board, score, chosen_action):
     """
-    Loop of the X player
+    Returns the utility of the decision and the optimal action of the X player
     """
     possibilities = actions(board)
 
     if possibilities == None:
-        return utility(board)
+        return utility(board), chosen_action
 
     for action in possibilities:
-        result_board = result(board)
-        final_board, final_score = mini_loop(result_board, score)
+        try:
+            result_board = result(board, action)
+        except:
+            continue
+        final_score, optimal_action = mini_loop(result_board, score, action)
         if final_score >= score:
             score = final_score
+            chosen_action = optimal_action
 
-    return score
+    return (score, chosen_action)
         
-def mini_loop(board, score):
+def mini_loop(board, score, chosen_action):
     """
-    Loop of the O player
+    Returns the utility of the decision and the optimal action of the O player
     """
     possibilities = actions(board)
 
     # If it's a terminal state, calculates it's utility
     if possibilities == None:
-        return utility(board)
+        return utility(board), chosen_action
 
     for action in possibilities:
-        result_board = result(board)        
-        final_board, final_score = max_loop(result_board, score)
+        try:
+            result_board = result(board, action)
+        except:
+            continue
+        final_score, optimal_action = max_loop(result_board, score, action)
         if final_score <= score:
             score = final_score
+            chosen_action = optimal_action
 
-    return score
+    return (score, chosen_action)
