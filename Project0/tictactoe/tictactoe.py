@@ -128,8 +128,6 @@ def utility(board):
     else:
         return 0
 
-# TODO
-# Still not playing optmally
 def minimax(board):
     """
     Returns the optimal action for the current player on the board.
@@ -139,17 +137,19 @@ def minimax(board):
         return None
     
     # Checking whose turn is it
+    # The arguments for the loops are: a board and a list of list containing the utility of the action and the action
     if player(board) == X:
-        score, optimal_action = max_loop(board, -1000, None) # The arguments are: a board, a default utility number and an action
+        choice = max_loop(board, -1000, None)
     elif player(board) == O:
-        score, optimal_action = mini_loop(board, 1000, None) # The arguments are: a board, a default utility number and an action
+        choice = min_loop(board, 1000, None)
 
-    return optimal_action
+    return choice[1]
 
 def max_loop(board, score, chosen_action):
     """
     Returns the utility of the decision and the optimal action of the X player
     """
+    score = -1000
     possibilities = actions(board)
 
     if possibilities == None:
@@ -160,17 +160,20 @@ def max_loop(board, score, chosen_action):
             result_board = result(board, action)
         except:
             continue
-        final_score, optimal_action = mini_loop(result_board, score, action)
+        final_score, optimal_action = min_loop(result_board, score, action)
         if final_score >= score:
             score = final_score
-            chosen_action = optimal_action
+            chosen_action = action
 
-    return (score, chosen_action)
+    decision = (score, chosen_action)
+    score = -1000
+    return decision
         
-def mini_loop(board, score, chosen_action):
+def min_loop(board, score, chosen_action):
     """
     Returns the utility of the decision and the optimal action of the O player
     """
+    score = 1000
     possibilities = actions(board)
 
     # If it's a terminal state, calculates it's utility
@@ -185,6 +188,8 @@ def mini_loop(board, score, chosen_action):
         final_score, optimal_action = max_loop(result_board, score, action)
         if final_score <= score:
             score = final_score
-            chosen_action = optimal_action
+            chosen_action = action
 
-    return (score, chosen_action)
+    decision = (score, chosen_action)
+    score = 1000
+    return decision
